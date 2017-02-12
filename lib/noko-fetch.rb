@@ -52,7 +52,7 @@ class NokoFetch
             puts "Main DB not found. Creating one now..."
             main_db = SQLite3::Database.new(@@main_db_loc)
             main_db.execute("CREATE TABLE dogdata(id, name, breed_primary, breed_secondary, gender, age, status)")
-            data_db.execute("CREATE TABLE seconddata(id, time, status)")
+            main_db.execute("CREATE TABLE seconddata(id, time, status)")
         end
     end
 end 

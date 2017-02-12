@@ -31,7 +31,7 @@ class Dog
     attr_accessor :intake_time
     @intake_time
     @out_time
-    
+
     def load_data(id_query, db_handle)
         #Waiting to implement until I have db storing
     end
@@ -46,7 +46,7 @@ class Dog
         if db_handle.execute("SELECT name FROM dogdata WHERE id LIKE " + id.to_s).length == 0
            db_handle.execute("INSERT INTO dogdata(id, name, breed_primary, breed_secondary, gender, age, status) VALUES(?, ?, ?, ?, ?, ?, ?)", [id, name, breed_primary, breed_second, gender, age, status])
         end
-        db_handle.execute("INSERT INTO seconddata(id, time, status) VALUES(?, ?, ?)", [id, time, status])
+        db_handle.execute("INSERT INTO seconddata(id, time, status) VALUES(?, ?, ?)", [id, intake_time, status])
     end
 
     def store_data_direct(id, breed_primary, breed_second, gender, age, status, intake_time)
