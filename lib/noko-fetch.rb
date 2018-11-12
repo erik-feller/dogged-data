@@ -33,7 +33,7 @@ class NokoFetch
             curr_dog.id = dog.css("div.views-field.views-field-field-pp-animalid-1").css("span.field-content").text.strip.to_i
             curr_dog.name = dog.css("div.views-field.views-field-field-pp-animalname").text.strip
             curr_dog.breed_primary = dog.css("div.views-field.views-field-field-pp-primarybreed").text.strip
-            curr_dog.breed_second = dog.css("div.views-field views-field-field-pp-secondarybreed").text.strip
+            curr_dog.breed_second = dog.css("div.views-field.views-field-field-pp-secondarybreed").text.strip
             str_age = dog.css("div.views-field.views-field-field-pp-age").css("span.field-content").text.strip.split
             curr_dog.age = 12*str_age[0].to_i + str_age[2].to_i
             curr_dog.gender = dog.css("div.views-field.views-field-field-pp-gender").css("span.field-content").text.strip
@@ -45,9 +45,6 @@ class NokoFetch
     end
 
     def database_check
-        #main_db_loc = "data/main.sqlite" #Holds information tied to ID
-        #data_db_loc = "data/data.sqlite" #Holds more time/length info
-
         if !(File.exist?@@main_db_loc)
             puts "Main DB not found. Creating one now..."
             main_db = SQLite3::Database.new(@@main_db_loc)
