@@ -31,7 +31,7 @@ class Dog
     attr_accessor :intake_time
     @intake_time
     attr_accessor :hold_times
-    @hold_times
+    @hold_times #List of timestamps seperated by commas, rep as str
     attr_accessor :out_time
     @out_time
 
@@ -54,10 +54,6 @@ class Dog
         return self
     end
 
-    def set(id, breed_primary, breed_second, gender, age, status, intake_time, out_time)
-        #Change Attributes in case we need to
-    end
-
     def store_data(db_handle)
         #Store the data of the current object 
         if is_new(db_handle)
@@ -67,11 +63,11 @@ class Dog
     end
     
     def update_data(db_handle)
-      db_handle.execute("UPDATE dogdata SET id=?, name=?, breed_primary=?, breed_secondary=?, gender=?, age=?, status=?, in_time=?, hold_times=?, out_time=? WHERE id=?", [id, name, breed_primary, breed_second, gender, age, status, intake_time, hold_times, out_time, id])
+      db_handle.execute("UPDATE dogdata SET id=?, name=?, breed_primary=?, breed_secondary=?, gender=?, age=?, status=?, hold_times=?, out_time=? WHERE id=?", [id, name, breed_primary, breed_second, gender, age, status, hold_times, out_time, id])
     end
 
-    def store_data_direct(id, breed_primary, breed_second, gender, age, status, intake_time)
-        #Add data into the database
+    def load_db(target, db_handle)
+      db_handle.execute("SELECT * FROM dogdata where id=?)", [target])
     end
 
     def is_new(db_handle)
@@ -88,12 +84,28 @@ class Dog
       @out_time = Time.now.utc.to_i
     end
 
-    def status_changed(db_loc)
+    def status_changed(db_handle)
       #determine if the status of a dog has been changed
+      if !(self.is_new)
+        db_dog = Dog.new
+        db_dog.load_db(id, db_handle)
+        if db_dog.status != status
+          return true
+        else
+          false
+        end
+      end
     end
 
     def hold_time_record(db_loc)
       #record the specific times a dog has been placed on hold. Stored as comma seperated timestamps
+      if self.status_changed && status == "On Hold"
+        if hold_times
+          @hold_times = hold_times + "," + Time.now.utc.to_s
+        else
+          @hold_times = Time.now.uts.to_s
+        end
+      end
     end
         
 end
