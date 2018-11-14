@@ -40,7 +40,6 @@ def database_check
         puts "Main DB not found. Creating one now..."
         main_db = SQLite3::Database.new(@main_db_loc)
         main_db.execute("CREATE TABLE dogdata(id, name, breed_primary, breed_secondary, gender, age, status, in_time, hold_times, out_time)")
-        main_db.execute("CREATE TABLE seconddata(id, time, status)")
     end
 end
 
@@ -48,13 +47,16 @@ if !(File.exist?@main_db_loc)
   puts "Main DB not found. Creating one now..."
   main_db = SQLite3::Database.new(@main_db_loc)
   main_db.execute("CREATE TABLE dogdata(id, name, breed_primary, breed_secondary, gender, age, status, in_time, hold_times, out_time)")
-  main_db.execute("CREATE TABLE seconddata(id, time, status)")
 end
 main_db = SQLite3::Database.new(@main_db_loc)
 web_fetch(main_db, working_map)
-unknown = main_db.execute("SELECT * FROM dogdata WHERE out_time IS NULL") do |row|
-  p ("this is a row " + row[1])
+main_db.execute("SELECT * FROM dogdata WHERE out_time IS NULL") do |row|
+  row_dog = Dog.new
+  row_dog.load_data_row(row)
+  if !(working_map[row[0]])
+    row_dog.set_out_time()
+    row_dog.update_data(main_db)
+  end
 end
-working_map.each do |key, val| 
-  puts(val.name)
-end
+#working_map.each do |key, val| 
+#end

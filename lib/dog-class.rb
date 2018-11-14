@@ -39,6 +39,21 @@ class Dog
         #Waiting to implement until I have db storing
     end
 
+    def load_data_row(row)
+        #A function that loads a dog from a DB row
+        @id = row[0]
+        @name = row[1]
+        @breed_primary = row[2]
+        @breed_second = row[3]
+        @gender = row[4]
+        @age = row[5]
+        @status = row[6]
+        @intake_time = row[7]
+        @hold_times = row[8]
+        @out_time = row[9]
+        return self
+    end
+
     def set(id, breed_primary, breed_second, gender, age, status, intake_time, out_time)
         #Change Attributes in case we need to
     end
@@ -46,10 +61,13 @@ class Dog
     def store_data(db_handle)
         #Store the data of the current object 
         if is_new(db_handle)
-           puts("dog " + name + " is a new dog")
-           db_handle.execute("INSERT INTO dogdata(id, name, breed_primary, breed_secondary, gender, age, status) VALUES(?, ?, ?, ?, ?, ?, ?)", [id, name, breed_primary, breed_second, gender, age, status])
+           #puts("dog " + name + " is a new dog")
+           db_handle.execute("INSERT INTO dogdata(id, name, breed_primary, breed_secondary, gender, age, status, in_time, hold_times, out_time) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [id, name, breed_primary, breed_second, gender, age, status, intake_time, hold_times, out_time])
         end
-        db_handle.execute("INSERT INTO seconddata(id, time, status) VALUES(?, ?, ?)", [id, intake_time, status])
+    end
+    
+    def update_data(db_handle)
+      db_handle.execute("UPDATE dogdata SET id=?, name=?, breed_primary=?, breed_secondary=?, gender=?, age=?, status=?, in_time=?, hold_times=?, out_time=? WHERE id=?", [id, name, breed_primary, breed_second, gender, age, status, intake_time, hold_times, out_time, id])
     end
 
     def store_data_direct(id, breed_primary, breed_second, gender, age, status, intake_time)
@@ -63,6 +81,11 @@ class Dog
       else
         false
       end
+    end
+
+    def set_out_time()
+      #Set the out time to the current time
+      @out_time = Time.now.utc.to_i
     end
 
     def status_changed(db_loc)
