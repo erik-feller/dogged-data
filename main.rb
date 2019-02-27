@@ -1,13 +1,15 @@
+#!/usr/bin/env ruby
 require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 require 'sqlite3'
 require 'time'
-require './lib/dog-class.rb'
+require_relative './lib/dog-class.rb'
 
 @main_db_loc='data/main.sqlite'
 working_map=Hash.new
 
+@main_db_loc = File.join(File.dirname(__FILE__), "data/main.sqlite")
 
 def web_fetch(db_handle, working_map)
     #Check for the Databases
