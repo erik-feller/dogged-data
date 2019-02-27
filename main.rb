@@ -50,6 +50,7 @@ if !(File.exist?@main_db_loc)
 end
 main_db = SQLite3::Database.new(@main_db_loc)
 web_fetch(main_db, working_map)
+#Compare the current list of dogs to the dogs that were present last run
 main_db.execute("SELECT * FROM dogdata WHERE out_time IS NULL") do |row|
   row_dog = Dog.new
   row_dog.load_data_row(row)
