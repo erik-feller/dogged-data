@@ -9,3 +9,6 @@ class Dog:
         self.s_breed = s_breed
         self.in_time = in_time 
         self.out_time = out_time
+
+    def add_out_time(self, out_time):
+        self.out_time = out_time
