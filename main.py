@@ -1,29 +1,27 @@
 from scrapy.crawler import CrawlerRunner
-from lib import dog_scraper, crawler_runner
+from lib.crawler_runner import MyCrawlerRunner
+from lib.dog_scraper import DogSpider
 from klein import Klein
 
 app = Klein()
 dog_list = []
+crawl_runner = CrawlerRunner()
 
-@app.route('/')
-def hello_world():
+@app.route('/', methods = ['GET'])
+def hello_world(request):
     return 'Hello, World!'
 
-@app.route('/update')
+@app.route('/update', methods = ['GET'])
 def update(request):
-    if request.url != "http://127.0.0.1:5000/update":
-        abort(404)
+    if request.uri != b'/update':
+        print(request.uri)
     else:
         print("update request accepted")
-        #crawl_runner.crawl(DogSpider, dog_list=dog_list)
+        event = crawl_runner.crawl(DogSpider, dog_list=dog_list)
+        #event.addCallback(finished_scrape)
     return 'Data, Update'
 
 if __name__ == '__main__':
-    from sys import stdout
-    from twisted.logger import globalLogBeginner, textFileLogObserver
-    from twisted.web import server, wsgi
-    from twisted.internet import endpoints, reactor
-
     app.run("localhost", 5000)
 
     #globalLogBeginner.beginLoggingTo([textFileLogObserver(stdout)])
