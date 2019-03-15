@@ -1,11 +1,17 @@
+import json
+import time
+import psycopg2
 from scrapy.crawler import CrawlerRunner
 from lib.crawler_runner import MyCrawlerRunner
 from lib.dog_scraper import DogSpider
 from klein import Klein
 
 app = Klein()
-dog_list = []
 crawl_runner = CrawlerRunner()
+dog_list = []
+scrape_in_progress = False
+scrape_complete = False
+db_conn = psycopg2.connect("dbname=dogdata user=dogdata");
 
 @app.route('/', methods = ['GET'])
 def hello_world(request):
@@ -13,13 +19,32 @@ def hello_world(request):
 
 @app.route('/update', methods = ['GET'])
 def update(request):
-    if request.uri != b'/update':
-        print(request.uri)
-    else:
-        print("update request accepted")
+    global scrape_in_progress
+    global scrape_complete
+    if not scrape_in_progress:
+        scrape_in_progress = True
+        global dog_list
         event = crawl_runner.crawl(DogSpider, dog_list=dog_list)
-        #event.addCallback(finished_scrape)
+        event.addCallback(finished_scrape)
+    else:
+        print("already scraping")
     return 'Data, Update'
+
+def finished_scrape(null):
+    global scrape_in_progress
+    global dog_list
+    global db_conn
+
+    if conn == None:
+        cur = db_conn.cursor()
+        cur.execute('SELECT version')
+        db_version = cur.fetchone()
+        print(db_version)
+    else:
+        print("DB ERROR")
+    for dog in dog_list:
+        dog.pretty_print()
+    scrape_in_progress = False
 
 if __name__ == '__main__':
     app.run("localhost", 5000)
