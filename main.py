@@ -35,7 +35,7 @@ def finished_scrape(null):
     global dog_list
     global db_conn
 
-    if conn == None:
+    if db_conn == None:
         cur = db_conn.cursor()
         cur.execute('SELECT version')
         db_version = cur.fetchone()
