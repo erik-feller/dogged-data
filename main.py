@@ -11,7 +11,7 @@ crawl_runner = CrawlerRunner()
 dog_list = []
 scrape_in_progress = False
 scrape_complete = False
-db_conn = psycopg2.connect("dbname=dogdata user=dogdata");
+db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost'");
 
 @app.route('/', methods = ['GET'])
 def hello_world(request):
