@@ -11,7 +11,7 @@ crawl_runner = CrawlerRunner()
 dog_list = []
 scrape_in_progress = False
 scrape_complete = False
-db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost'");
+db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='password'");
 
 @app.route('/', methods = ['GET'])
 def hello_world(request):
@@ -29,6 +29,10 @@ def update(request):
     else:
         print("already scraping")
     return 'Data, Update'
+
+@app.route('/data/breeds', methods = ['GET'])
+def data(request):
+    #Make SQL requests for selected data here
 
 def finished_scrape(null):
     global scrape_in_progress

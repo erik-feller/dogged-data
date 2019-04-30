@@ -20,3 +20,11 @@ class Dog:
             print(self.name + " is a " + self.p_breed + " that is " + str(self.age) + " months old " + self.gender)
         else:
             print(self.name + " is a " + self.p_breed + ", " + self.s_breed + " that is " + str(self.age) + " months old " + self.gender)
+
+    def sql_insert_print(self):
+        #Handle the case where the data is new
+        if self.db_id == None:
+            return ("INSERT INTO dogdata (humane_id, name, age, breed_primary, breed_secondary, gender, in_time, out_time) VALUES ({0},{1},{2},{3},{4},{5},{6},{7})".format(self.h_id, self.name, self.age, self.p_breed, self.s_breed, self.gender, self.in_time, self.out_time))
+        
+        else:
+            #Need to do a read modify write for this step
