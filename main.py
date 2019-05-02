@@ -13,6 +13,17 @@ scrape_in_progress = False
 scrape_complete = False
 db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='password'");
 
+##### DB DEBUG BLOCK #####
+##try:
+##    db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='password'");
+##    cursor = db_conn.cursor()
+##    cursor.execute("INSERT INTO tutorials (name) VALUES ({0})".format("'testname'"))
+##    db_conn.commit()
+##    db_conn.close
+##    cursor.close()
+##except Exception as e:
+##    print(e)
+
 @app.route('/', methods = ['GET'])
 def hello_world(request):
     return 'Hello, World!'
@@ -30,8 +41,8 @@ def update(request):
         print("already scraping")
     return 'Data, Update'
 
-@app.route('/data/breeds', methods = ['GET'])
-def data(request):
+#@app.route('/data/breeds', methods = ['GET'])
+#def data(request):
     #Make SQL requests for selected data here
 
 def finished_scrape(null):
@@ -39,13 +50,6 @@ def finished_scrape(null):
     global dog_list
     global db_conn
 
-    if db_conn == None:
-        cur = db_conn.cursor()
-        cur.execute('SELECT version')
-        db_version = cur.fetchone()
-        print(db_version)
-    else:
-        print("DB ERROR")
     for dog in dog_list:
         dog.pretty_print()
     scrape_in_progress = False
