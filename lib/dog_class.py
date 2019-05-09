@@ -27,4 +27,6 @@ class Dog:
             return ("INSERT INTO dogdata (humane_id, name, age, breed_primary, breed_secondary, gender, in_time, out_time) VALUES ({0},{1},{2},{3},{4},{5},{6},{7})".format(self.h_id, self.name, self.age, self.p_breed, self.s_breed, self.gender, self.in_time, self.out_time))
         
         else:
-            #Need to do a read modify write for this step
+            #If the entry alrady exists in the database, enforce only updating out time.
+            return ("UPDATE dogdata SET out_time={0} WHERE id={1}".format(self.db_id, self.out_time))
+            
