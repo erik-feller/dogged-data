@@ -30,6 +30,20 @@ class Dog:
         self.age = int(adoptableSearch['Age'])
         self.gender = str(adoptableSearch['Sex'])
 
+    def updateInDb(self, cursor):
+        #Check to see if the dog is already in the database
+        cursor.execute("SELECT * FROM dogs WHERE humane_id=%i",self.h_id)
+        rows = cursor.fetchall()
+        if len(rows) > 0:
+            #Dog is in database, just update
+            print("%s is already in the database, updating their entry with the most recent info")
+        else:
+            #insert dog into database
+            print("Adding %s to the database")
+            cursor.execute("INSERT INTO dogs (humane_id, name, age, breed_primary, breed_secondary, gender, in_time, out_time) VALUES (%i, %s, %i, %s, %s, %s, %i, %i)", self.h_id, self.name, self.age, self.p_breed, self.s_breed, self.gender, self.in_time, self.out_time)
+        cursor.commit
+        print(cursor.fetchone())
+
     def pretty_print(self):
         if self.s_breed == None:
             print(self.name + " is a " + self.p_breed + " that is " + str(self.age) + " months old " + self.gender)
@@ -39,7 +53,7 @@ class Dog:
     def sql_insert_print(self):
         #Handle the case where the data is new
         if self.db_id == None:
-            return ("INSERT INTO dogdata (humane_id, name, age, breed_primary, breed_secondary, gender, in_time, out_time) VALUES ({0},{1},{2},{3},{4},{5},{6},{7})".format(self.h_id, self.name, self.age, self.p_breed, self.s_breed, self.gender, self.in_time, self.out_time))
+            return ("INSERT INTO dogdata (humane_id, name, age, breed_primary, breed_secondary, gender, in_time, out_time) VALUES ({0},\'{1}\',{2},\'{3}\',\'{4}\',\'{5}\',{6},{7})".format(self.h_id, self.name, self.age, self.p_breed, self.s_breed, self.gender, self.in_time, self.out_time))
         
         else:
             #If the entry alrady exists in the database, enforce only updating out time.

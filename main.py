@@ -47,7 +47,7 @@ def update(request):
         for obj in objects:
             dog = Dog.emptyDog()
             dog.createFromAdoptableSearch(obj['adoptableSearch'])
-            dog.pretty_print()
+            dog.updateInDb()
         #event.addCallback(finished_scrape)
     else:
         print("already scraping")
