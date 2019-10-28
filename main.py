@@ -14,7 +14,7 @@ dog_list = []
 scrape_in_progress = False
 scrape_complete = False
 data_url = "https://www.boulderhumane.org/wp-content/plugins/Petpoint-Webservices-2018/pullanimals.php?type=dog"
-#db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='password'");
+db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='mysecretpassword'");
 
 ##### DB DEBUG BLOCK #####
 ##try:
@@ -36,22 +36,28 @@ def update(request):
     global scrape_in_progress
     global scrape_complete
     if not scrape_in_progress:
-        scrape_in_progress = True
+        #scrape_in_progress = True
+        #Load the list of previously available dogs
         global dog_list
+        cursor = db_conn.cursor()
+        cursor.execute("SELECT * FROM dogs WHERE out_time is NULL")
+        rows = cursor.fetchall()
+        for row in rows: 
+            print(row)
         http = urllib.request.urlopen(data_url) #crawl_runner.crawl(DogSpider, dog_list=dog_list)
         plain = http.read().decode('utf-8') #Fixing the encoding of document to utf8
         #clean terrible formatting from BVHS
-        clean_response = plain.replace("\n", "")
-        clean_response = plain.replace("\\n", "")
+        clean_response = plain.replace("\\n", "").replace("[\"      \"]", "null")
         objects = json.loads(clean_response)
         for obj in objects:
             dog = Dog.emptyDog()
             dog.createFromAdoptableSearch(obj['adoptableSearch'])
-            dog.updateInDb()
+            dog.updateInDb(db_conn)
         #event.addCallback(finished_scrape)
+        return "updated " + str(len(objects)) + " number of entries"
     else:
         print("already scraping")
-    return "updated " + str(len(objects)) + " number of entries"
+        return "The server is currently busy"
 
 #@app.route('/data/breeds', methods = ['GET'])
 #def data(request):
