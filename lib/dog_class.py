@@ -17,7 +17,7 @@ class Dog:
         #TODO:Add some bool values for behavior stuff
         
     def emptyDog():
-        return Dog(None, None, None, None, None, None, None, None, None, None)
+        return Dog(None, None, None, None, None, None, None, None, None, None, None)
 
 
     def createFromAdoptableSearch(self, adoptableSearch):
