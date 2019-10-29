@@ -10,7 +10,7 @@ from klein import Klein
 
 app = Klein()
 crawl_runner = CrawlerRunner()
-dog_list = []
+dog_list = {}
 scrape_in_progress = False
 scrape_complete = False
 data_url = "https://www.boulderhumane.org/wp-content/plugins/Petpoint-Webservices-2018/pullanimals.php?type=dog"
@@ -37,24 +37,38 @@ def update(request):
     global scrape_complete
     if not scrape_in_progress:
         #scrape_in_progress = True
+
         #Load the list of previously available dogs
         global dog_list
         cursor = db_conn.cursor()
         cursor.execute("SELECT * FROM dogs WHERE out_time is NULL")
         rows = cursor.fetchall()
+        print(len(rows))
         for row in rows: 
-            print(row)
+            dog = Dog.emptyDog()
+            dog.createFromDbRow(row)
+            dog_list[dog.h_id] = dog
+
+        #Get the data from BVHS
         http = urllib.request.urlopen(data_url) #crawl_runner.crawl(DogSpider, dog_list=dog_list)
         plain = http.read().decode('utf-8') #Fixing the encoding of document to utf8
-        #clean terrible formatting from BVHS
         clean_response = plain.replace("\\n", "").replace("[\"      \"]", "null")
         objects = json.loads(clean_response)
         for obj in objects:
             dog = Dog.emptyDog()
             dog.createFromAdoptableSearch(obj['adoptableSearch'])
+            if dog.h_id in dog_list:
+                dog_list[dog.h_id] = None
             dog.updateInDb(db_conn)
+
+        #Add out time of now to any dogs that are no longer in the shelter
+        for k, val in dog_list.items():
+            if val is not None:
+                print(val.name)
+                val.setOutTime()
+                val.updateInDb(db_conn)
         #event.addCallback(finished_scrape)
-        return "updated " + str(len(objects)) + " number of entries"
+        return "updated " + str(len(objects)) + " entries"
     else:
         print("already scraping")
         return "The server is currently busy"
