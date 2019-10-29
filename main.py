@@ -73,9 +73,20 @@ def update(request):
         print("already scraping")
         return "The server is currently busy"
 
-#@app.route('/data/breeds', methods = ['GET'])
-#def data(request):
+@app.route('/data/breeds', methods = ['GET'])
+def data(request):
     #Make SQL requests for selected data here
+    labels = []
+    data = []
+    cursor = db_conn.cursor()
+    cursor.execute("SELECT breed_primary, COUNT(*) FROM dogs GROUP BY breed_primary")
+    rows = cursor.fetchall()
+    for row in rows:
+        labels.append(row[0])
+        data.append(row[1])
+    response = json.dumps({"labels": labels, "data": data})
+    return response
+
 
 def finished_scrape(d):
     global scrape_in_progress
