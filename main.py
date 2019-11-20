@@ -6,6 +6,7 @@ from scrapy.crawler import CrawlerRunner
 from lib.crawler_runner import MyCrawlerRunner
 from lib.dog_scraper import DogSpider
 from lib.dog_class import Dog
+from twisted.internet import defer
 from klein import Klein
 
 app = Klein()
@@ -27,9 +28,21 @@ db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' pas
 ##except Exception as e:
 ##    print(e)
 
+def addTag(tag, text):
+    return '<{0}>{1}</{0}>'.format(tag, text)
+
 @app.route('/', methods = ['GET'])
-def hello_world(request):
-    return 'Hello, World!'
+@defer.inlineCallbacks
+def hello_world(request): 
+    global D 
+    D = defer.Deferred()
+    #text = 'This is a Hello World coroutine function'
+    #result = yield heartBeat()
+    result = yield addTag('i', "HELLO WORLD") #setHeader(request, 'GET', 'application/json')
+    result = yield addTag('html', result)
+    request.setHeader('Test-Header', 'this is a value')
+    setCorsHeaders(request)
+    return result
 
 @app.route('/update', methods = ['GET'])
 def update(request):
@@ -84,9 +97,22 @@ def data(request):
     for row in rows:
         labels.append(row[0])
         data.append(row[1])
+    setCorsHeaders(request)
+    request.setHeader('Content-Type', 'application/json')
     response = json.dumps({"labels": labels, "data": data})
     return response
 
+#Function to heartbeat
+#def heartBeat():
+#    return 'The dogged-data appliction is up and running\n'
+
+#Function to establish a deferred with proper headers
+def setCorsHeaders(request):
+    request.setHeader('Access-Control-Allow-Origin', '*')
+    request.setHeader('Access-Control-Allow-Methods', '*')
+    request.setHeader('Access-Control-Allow-Headers', '*')
+
+#Function to 
 
 def finished_scrape(d):
     global scrape_in_progress
@@ -98,12 +124,8 @@ def finished_scrape(d):
 
     scrape_in_progress = False
 
-#This method needs to read a dog object from a sql db line
-def readDog():
-    pass
-
 if __name__ == '__main__':
-    app.run("localhost", 5000)
+    app.run("0.0.0.0", 5000)
 
     #globalLogBeginner.beginLoggingTo([textFileLogObserver(stdout)])
 
