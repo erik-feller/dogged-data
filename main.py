@@ -102,6 +102,24 @@ def data(request):
     response = json.dumps({"labels": labels, "data": data})
     return response
 
+@app.route('/data/gender', methods = ['GET'])
+def data(request):
+    #Make SQL requests for selected data here
+    labels = []
+    data = []
+    cursor = db_conn.cursor()
+    cursor.execute("SELECT gender, COUNT(*) FROM dogs GROUP BY gender")
+    rows = cursor.fetchall()
+    for row in rows:
+        labels.append(row[0])
+        data.append(row[1])
+    setCorsHeaders(request)
+    request.setHeader('Content-Type', 'application/json')
+    response = json.dumps({"labels": labels, "data": data})
+    return response
+
+
+
 #Function to heartbeat
 #def heartBeat():
 #    return 'The dogged-data appliction is up and running\n'
