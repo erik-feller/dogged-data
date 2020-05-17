@@ -2,15 +2,10 @@ import json
 import urllib.request
 import time
 import psycopg2
-from scrapy.crawler import CrawlerRunner
-from lib.crawler_runner import MyCrawlerRunner
-from lib.dog_scraper import DogSpider
-from lib.dog_class import Dog
 from twisted.internet import defer
 from klein import Klein
 
 app = Klein()
-crawl_runner = CrawlerRunner()
 dog_list = {}
 scrape_in_progress = False
 scrape_complete = False
@@ -80,7 +75,7 @@ def update(request):
                 print(val.name)
                 val.setOutTime()
                 val.updateInDb(db_conn)
-        #event.addCallback(finished_scrape)
+
         return "updated " + str(len(objects)) + " entries"
     else:
         print("already scraping")
@@ -102,6 +97,13 @@ def data(request):
     response = json.dumps({"labels": labels, "data": data})
     return response
 
+@app.route('/data/age/<breed>', methods = ['GET'])
+def data(request):
+    labels = []
+    data = []
+    cursor = db_conn.cursor()
+    rows = cursor.fetchall()
+
 @app.route('/data/gender', methods = ['GET'])
 def data(request):
     #Make SQL requests for selected data here
@@ -118,6 +120,13 @@ def data(request):
     response = json.dumps({"labels": labels, "data": data})
     return response
 
+@app.route('/data/gender/<breed>/')
+def data(request):
+    labels = []
+    data = []
+    cursor = db_conn.cursor()
+    stmt = sql.SQL("SELECT gender, COUNT(*) FROM dogs WHERE breed_primary={breed} GROUP BY gender").format(breed = sql.Identifier(breed))
+    cursor.execute(stmt)
 
 
 #Function to heartbeat
