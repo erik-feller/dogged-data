@@ -1,0 +1,18 @@
+version: "2.2"
+services:
+  server:
+    image: dogdata
+    depends_on:
+      - "postgres"
+    command: ["./wait-for-it.sh", "postgres:5432", "--", "python", "main.py"]
+    ports:
+      - "5000:5000"
+  postgres:
+    image: dogdata-postgres
+    environment:
+      - POSTGRES_USER=dogdata
+      - POSTGRES_PASSWORD=mysecretpassword
+    ports:
+      - "5432:5432"
+
+    
