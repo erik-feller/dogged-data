@@ -10,7 +10,7 @@ dog_list = {}
 scrape_in_progress = False
 scrape_complete = False
 data_url = "https://www.boulderhumane.org/wp-content/plugins/Petpoint-Webservices-2018/pullanimals.php?type=dog"
-db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='mysecretpassword'");
+db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='postgres' password='mysecretpassword'");
 
 ##### DB DEBUG BLOCK #####
 ##try:
