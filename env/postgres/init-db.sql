@@ -1,5 +1,3 @@
-DROP DATABASE IF EXISTS dogdata;
-CREATE DATABASE dogdata;
 GRANT ALL PRIVILEGES ON DATABASE dogdata TO dogdata;
 CREATE TABLE dogs (
     id serial PRIMARY KEY,
