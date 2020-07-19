@@ -2,15 +2,17 @@ import json
 import urllib.request
 import time
 import psycopg2
+from psycopg2 import sql
 from twisted.internet import defer
 from klein import Klein
+from lib.dog_class import Dog
 
 app = Klein()
 dog_list = {}
 scrape_in_progress = False
 scrape_complete = False
 data_url = "https://www.boulderhumane.org/wp-content/plugins/Petpoint-Webservices-2018/pullanimals.php?type=dog"
-db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='postgres' password='mysecretpassword'");
+db_conn = psycopg2.connect("dbname='dogdata' user='dogdata' host='localhost' password='mysecretpassword'");
 
 ##### DB DEBUG BLOCK #####
 ##try:
@@ -81,57 +83,102 @@ def update(request):
         print("already scraping")
         return "The server is currently busy"
 
-@app.route('/data/breeds', methods = ['GET'])
-def data(request):
-    #Make SQL requests for selected data here
-    labels = []
-    data = []
-    cursor = db_conn.cursor()
-    cursor.execute("SELECT breed_primary, COUNT(*) FROM dogs GROUP BY breed_primary")
-    rows = cursor.fetchall()
-    for row in rows:
-        labels.append(row[0])
-        data.append(row[1])
-    setCorsHeaders(request)
-    request.setHeader('Content-Type', 'application/json')
-    response = json.dumps({"labels": labels, "data": data})
-    return response
+with app.subroute('/data') as app:
 
-@app.route('/data/age/<breed>', methods = ['GET'])
-def data(request):
-    labels = []
-    data = []
-    cursor = db_conn.cursor()
-    rows = cursor.fetchall()
+    @app.route('/breeds', methods = ['GET'])
+    def breed_data(request):
+        labels = []
+        data = []
+        condense = False;
+        cursor = db_conn.cursor()
 
-@app.route('/data/gender', methods = ['GET'])
-def data(request):
-    #Make SQL requests for selected data here
-    labels = []
-    data = []
-    cursor = db_conn.cursor()
-    cursor.execute("SELECT gender, COUNT(*) FROM dogs GROUP BY gender")
-    rows = cursor.fetchall()
-    for row in rows:
-        labels.append(row[0])
-        data.append(row[1])
-    setCorsHeaders(request)
-    request.setHeader('Content-Type', 'application/json')
-    response = json.dumps({"labels": labels, "data": data})
-    return response
+        #Read args and look for condensed data flag
+        if len(request.args) > 0:
+            for arg in request.args:
+                if arg==b'condense' and b'true' in request.args[arg]:
+                    condense = True
 
-@app.route('/data/gender/<breed>/')
-def data(request):
-    labels = []
-    data = []
-    cursor = db_conn.cursor()
-    stmt = sql.SQL("SELECT gender, COUNT(*) FROM dogs WHERE breed_primary={breed} GROUP BY gender").format(breed = sql.Identifier(breed))
-    cursor.execute(stmt)
+        if condense:
+            cursor.execute("""
+                SELECT breed_primary, COUNT(*) 
+                FROM dogs 
+                GROUP BY breed_primary
+                ORDER BY COUNT(*) DESC
+                LIMIT 9""")
+            rows = cursor.fetchall()
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM dogs""")
+            total_count = cursor.fetchone()[0]
+            count = 0
+            for row in rows:
+                labels.append(row[0])
+                count = count+row[1]
+                data.append(row[1])
+            labels.append("Other")
+            print(total_count-count)
+            data.append((total_count-count))
 
+        else:
+            cursor.execute("""
+                SELECT breed_primary, COUNT(*) 
+                FROM dogs 
+                GROUP BY breed_primary
+                ORDER BY COUNT(*) DESC""")
+            rows = cursor.fetchall()
+            for row in rows:
+                labels.append(row[0])
+                data.append(row[1])
+        
+        setCorsHeaders(request)
+        request.setHeader('Content-Type', 'application/json')
+        response = json.dumps({"labels": labels, "data": data})
+        return response
 
-#Function to heartbeat
-#def heartBeat():
-#    return 'The dogged-data appliction is up and running\n'
+    @app.route('/age', methods = ['GET'])
+    def age_data(request):
+        labels = []
+        data = []
+        cursor = db_conn.cursor()
+        rows = cursor.fetchall()
+
+    @app.route('/gender', methods = ['GET'])
+    def gender_data(request):
+        labels = []
+        data = []
+        breeds = []
+        cursor = db_conn.cursor()
+        if len(request.args) > 0:
+            for arg in request.args:
+                if arg==b'breed':
+                    breeds.append(list(map(lambda x: x.decode("utf-8"),request.args[arg])))
+
+        if breeds:
+            cursor.execute("""
+                SELECT gender, COUNT(*) 
+                FROM dogs
+                WHERE breed_primary=%(breed)s 
+                GROUP BY gender
+                """, {
+                    'breed': breeds[0][0] #TODO Add support for a list of breeds
+                })
+            rows = cursor.fetchall()
+        else:
+            cursor.execute("""
+                SELECT gender, COUNT(*) 
+                FROM dogs
+                GROUP BY gender
+                """)
+            rows = cursor.fetchall()
+
+        for row in rows:
+            labels.append(row[0])
+            data.append(row[1])
+
+        setCorsHeaders(request)
+        request.setHeader('Content-Type', 'application/json')
+        response = json.dumps({"labels": labels, "data": data})
+        return response
 
 #Function to establish a deferred with proper headers
 def setCorsHeaders(request):
