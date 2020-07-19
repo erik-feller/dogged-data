@@ -137,10 +137,110 @@ with app.subroute('/data') as app:
 
     @app.route('/age', methods = ['GET'])
     def age_data(request):
-        labels = []
+        labels = ["Puppy", "Adolescent", "Adult", "Senior"]
         data = []
+        breeds = []
         cursor = db_conn.cursor()
-        rows = cursor.fetchall()
+
+        if len(request.args) > 0:
+            for arg in request.args:
+                if arg==b'breed':
+                    breeds.append(list(map(lambda x: x.decode("utf-8"),request.args[arg])))
+
+        if breeds:
+            cursor.execute("""
+                SELECT 
+                    SUM (
+                        CASE WHEN age < 5 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Puppy",
+                    SUM (
+                        CASE WHEN age > 4 and age < 25 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Adolescent",
+                    SUM (
+                        CASE WHEN age > 24 and age < 73 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Adult",
+                    SUM (
+                        CASE WHEN age > 73 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Senior"
+                FROM dogs
+                WHERE breed_primary=%(breed)s""", {
+                    'breed':breeds[0][0]
+                })
+            rows = cursor.fetchall()
+
+        else:
+            cursor.execute("""
+                SELECT 
+                    SUM (
+                        CASE WHEN age < 5 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Puppy",
+                    SUM (
+                        CASE WHEN age > 4 and age < 25 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Adolescent",
+                    SUM (
+                        CASE WHEN age > 24 and age < 73 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Adult",
+                    SUM (
+                        CASE WHEN age > 73 THEN
+                            1
+                        ELSE
+                            0
+                        END
+                        ) AS "Senior"
+                FROM dogs""")
+            rows = cursor.fetchall()
+            #cursor.execute("""
+            #    SELECT range, COUNT(*)
+            #    FROM (SELECT t.*,
+            #        (CASE WHEN age < 4 THEN 'puppy'
+            #        WHEN age > 3 and age < 25 THEN 'adolescent'
+            #        WHEN age > 24 and age < 73 THEN 'adult'
+            #        WHEN age > 72 THEN 'senior'
+            #        END) as range
+            #    FROM dogs
+            #    GROUP BY range""")
+
+        #for row in rows:
+        #    print(row)
+        #    labels.append(row[0])
+        #    data.append(row[1])
+        row = rows[0]
+        for i in row:
+            data.append(i)
+        
+        setCorsHeaders(request)
+        request.setHeader('Content-Type', 'application/json')
+        response = json.dumps({"labels": labels, "data": data})
+        return response
+
 
     @app.route('/gender', methods = ['GET'])
     def gender_data(request):
