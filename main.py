@@ -217,22 +217,8 @@ with app.subroute('/data') as app:
                         ) AS "Senior"
                 FROM dogs""")
             rows = cursor.fetchall()
-            #cursor.execute("""
-            #    SELECT range, COUNT(*)
-            #    FROM (SELECT t.*,
-            #        (CASE WHEN age < 4 THEN 'puppy'
-            #        WHEN age > 3 and age < 25 THEN 'adolescent'
-            #        WHEN age > 24 and age < 73 THEN 'adult'
-            #        WHEN age > 72 THEN 'senior'
-            #        END) as range
-            #    FROM dogs
-            #    GROUP BY range""")
+            row = rows[0]
 
-        #for row in rows:
-        #    print(row)
-        #    labels.append(row[0])
-        #    data.append(row[1])
-        row = rows[0]
         for i in row:
             data.append(i)
         
