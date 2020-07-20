@@ -89,7 +89,8 @@ with app.subroute('/data') as app:
     def breed_data(request):
         labels = []
         data = []
-        condense = False;
+        condense = False
+        splitage = False
         cursor = db_conn.cursor()
 
         #Read args and look for condensed data flag
@@ -97,38 +98,111 @@ with app.subroute('/data') as app:
             for arg in request.args:
                 if arg==b'condense' and b'true' in request.args[arg]:
                     condense = True
+                if arg==b'split' and b'true' in request.args[arg]:
+                    splitage = True
 
         if condense:
-            cursor.execute("""
-                SELECT breed_primary, COUNT(*) 
-                FROM dogs 
-                GROUP BY breed_primary
-                ORDER BY COUNT(*) DESC
-                LIMIT 9""")
-            rows = cursor.fetchall()
-            cursor.execute("""
-                SELECT COUNT(*)
-                FROM dogs""")
-            total_count = cursor.fetchone()[0]
-            count = 0
-            for row in rows:
-                labels.append(row[0])
-                count = count+row[1]
-                data.append(row[1])
-            labels.append("Other")
-            print(total_count-count)
-            data.append((total_count-count))
+            if splitage:
+                puppyData = []
+                adolescentData = []
+                adultData = []
+                seniorData = []
+                row = getAgeSplitData(cursor, [])
+                #Counts to track the splits for the Other catagory
+                puppyCount = row[0]
+                adolescentCount = row[1]
+                adultCount = row[2]
+                seniorCount = row[3]
+                cursor.execute("""
+                    SELECT breed_primary, COUNT(*) 
+                    FROM dogs 
+                    GROUP BY breed_primary
+                    ORDER BY COUNT(*) DESC
+                    LIMIT 9""")
+                rows = cursor.fetchall()
+                for row in rows:
+                    labels.append(row[0])
+                    #find a join that can replace this 
+                    row = getAgeSplitData(cursor, [[row[0]]])
+                    puppyData.append(row[0])
+                    puppyCount = puppyCount-row[0]
+                    adolescentData.append(row[1])
+                    adolescentCount = adolescentCount-row[1]
+                    adultData.append(row[2])
+                    adultCount = adultCount-row[2]
+                    seniorData.append(row[3])
+                    seniorCount = seniorCount-row[3]
+
+                #Build final object with aggregated data
+                labels.append("Other")
+                puppyData.append(puppyCount)
+                data.append(puppyData)
+                adolescentData.append(adolescentCount)
+                data.append(adolescentData)
+                adultData.append(adultCount)
+                data.append(adultData)
+                seniorData.append(seniorCount)
+                data.append(seniorData)
+                
+            else:
+                cursor.execute("""
+                    SELECT breed_primary, COUNT(*) 
+                    FROM dogs 
+                    GROUP BY breed_primary
+                    ORDER BY COUNT(*) DESC
+                    LIMIT 9""")
+                rows = cursor.fetchall()
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM dogs""")
+                total_count = cursor.fetchone()[0]
+                count = 0
+                for row in rows:
+                    labels.append(row[0])
+                    count = count+row[1]
+                    data.append(row[1])
+                labels.append("Other")
+                print(total_count-count)
+                data.append((total_count-count))
 
         else:
-            cursor.execute("""
-                SELECT breed_primary, COUNT(*) 
-                FROM dogs 
-                GROUP BY breed_primary
-                ORDER BY COUNT(*) DESC""")
-            rows = cursor.fetchall()
-            for row in rows:
-                labels.append(row[0])
-                data.append(row[1])
+            if splitage:
+                puppyData = []
+                adolescentData = []
+                adultData = []
+                seniorData = []
+                cursor.execute("""
+                    SELECT breed_primary, COUNT(*) 
+                    FROM dogs 
+                    GROUP BY breed_primary
+                    ORDER BY COUNT(*) DESC""")
+                rows = cursor.fetchall()
+                for row in rows:
+                    labels.append(row[0])
+                    print(row[0])
+                    #find a join that can replace this 
+                    row = getAgeSplitData(cursor, [[row[0]]])
+                    print(row)
+                    puppyData.append(row[0])
+                    adolescentData.append(row[1])
+                    adultData.append(row[2])
+                    seniorData.append(row[3])
+                data.append(puppyData)
+                data.append(adolescentData)
+                data.append(adultData)
+                data.append(seniorData)
+        
+
+            else:
+                cursor.execute("""
+                    SELECT breed_primary, COUNT(*) 
+                    FROM dogs 
+                    GROUP BY breed_primary
+                    ORDER BY COUNT(*) DESC""")
+                rows = cursor.fetchall()
+                for row in rows:
+                    labels.append(row[0])
+                    data.append(row[1])
         
         setCorsHeaders(request)
         request.setHeader('Content-Type', 'application/json')
@@ -147,77 +221,7 @@ with app.subroute('/data') as app:
                 if arg==b'breed':
                     breeds.append(list(map(lambda x: x.decode("utf-8"),request.args[arg])))
 
-        if breeds:
-            cursor.execute("""
-                SELECT 
-                    SUM (
-                        CASE WHEN age < 5 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Puppy",
-                    SUM (
-                        CASE WHEN age > 4 and age < 25 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Adolescent",
-                    SUM (
-                        CASE WHEN age > 24 and age < 73 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Adult",
-                    SUM (
-                        CASE WHEN age > 73 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Senior"
-                FROM dogs
-                WHERE breed_primary=%(breed)s""", {
-                    'breed':breeds[0][0]
-                })
-            rows = cursor.fetchall()
-
-        else:
-            cursor.execute("""
-                SELECT 
-                    SUM (
-                        CASE WHEN age < 5 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Puppy",
-                    SUM (
-                        CASE WHEN age > 4 and age < 25 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Adolescent",
-                    SUM (
-                        CASE WHEN age > 24 and age < 73 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Adult",
-                    SUM (
-                        CASE WHEN age > 73 THEN
-                            1
-                        ELSE
-                            0
-                        END
-                        ) AS "Senior"
-                FROM dogs""")
-            rows = cursor.fetchall()
-            row = rows[0]
+        row = getAgeSplitData(cursor, breeds)
 
         for i in row:
             data.append(i)
@@ -265,6 +269,82 @@ with app.subroute('/data') as app:
         request.setHeader('Content-Type', 'application/json')
         response = json.dumps({"labels": labels, "data": data})
         return response
+
+#Function to make queries for age data
+def getAgeSplitData(cursor, breeds):
+    if breeds:
+        print(breeds)
+        cursor.execute("""
+            SELECT 
+                SUM (
+                    CASE WHEN age < 5 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Puppy",
+                SUM (
+                    CASE WHEN age > 4 and age < 25 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Adolescent",
+                SUM (
+                    CASE WHEN age > 24 and age < 73 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Adult",
+                SUM (
+                    CASE WHEN age > 72 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Senior"
+            FROM dogs
+            WHERE breed_primary=%(breed)s""", {
+                'breed':breeds[0][0]
+            })
+        rows = cursor.fetchall()
+        row = rows[0]
+    else:
+        cursor.execute("""
+            SELECT 
+                SUM (
+                    CASE WHEN age < 5 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Puppy",
+                SUM (
+                    CASE WHEN age > 4 and age < 25 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Adolescent",
+                SUM (
+                    CASE WHEN age > 24 and age < 73 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Adult",
+                SUM (
+                    CASE WHEN age > 73 THEN
+                        1
+                    ELSE
+                        0
+                    END
+                    ) AS "Senior"
+            FROM dogs""")
+        rows = cursor.fetchall()
+        row = rows[0]
+    return row
 
 #Function to establish a deferred with proper headers
 def setCorsHeaders(request):
