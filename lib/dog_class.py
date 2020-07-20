@@ -24,7 +24,7 @@ class Dog:
         #later make a db query to see if the dog exists already
         self.h_id = int(adoptableSearch['ID'])
         if adoptableSearch['ChipNumber'] is not None:
-            self.chip_num = int(adoptableSearch['ChipNumber'])
+            self.chip_num = adoptableSearch['ChipNumber']
         else:
             self.chip_num = 0
         self.name = str(adoptableSearch['Name'])
