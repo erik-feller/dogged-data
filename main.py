@@ -53,7 +53,6 @@ def update(request):
         cursor = db_conn.cursor()
         cursor.execute("SELECT * FROM dogs WHERE out_time is NULL")
         rows = cursor.fetchall()
-        print(len(rows))
         for row in rows: 
             dog = Dog.emptyDog()
             dog.createFromDbRow(row)
@@ -74,7 +73,6 @@ def update(request):
         #Add out time of now to any dogs that are no longer in the shelter
         for k, val in dog_list.items():
             if val is not None:
-                print(val.name)
                 val.setOutTime()
                 val.updateInDb(db_conn)
 
@@ -162,7 +160,6 @@ with app.subroute('/data') as app:
                     count = count+row[1]
                     data.append(row[1])
                 labels.append("Other")
-                print(total_count-count)
                 data.append((total_count-count))
 
         else:
@@ -179,10 +176,8 @@ with app.subroute('/data') as app:
                 rows = cursor.fetchall()
                 for row in rows:
                     labels.append(row[0])
-                    print(row[0])
                     #find a join that can replace this 
                     row = getAgeSplitData(cursor, [[row[0]]])
-                    print(row)
                     puppyData.append(row[0])
                     adolescentData.append(row[1])
                     adultData.append(row[2])
@@ -273,7 +268,6 @@ with app.subroute('/data') as app:
 #Function to make queries for age data
 def getAgeSplitData(cursor, breeds):
     if breeds:
-        print(breeds)
         cursor.execute("""
             SELECT 
                 SUM (
@@ -358,7 +352,6 @@ def finished_scrape(d):
     global scrape_in_progress
     global dog_list
     #global db_conn
-    print(d)
     #for dog in dog_list:
     #    dog.pretty_print()
 
